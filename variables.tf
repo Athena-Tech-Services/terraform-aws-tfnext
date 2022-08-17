@@ -70,7 +70,6 @@ variable "env_vars" {
     value = string
     type  = string
   }))
-  default     = []
   description = "env variables for the code build stage build"
 }
 
