@@ -78,3 +78,16 @@ variable "path_to_buildspec" {
   type        = string
   description = "path to buildspec"
 }
+
+variable "enable_pipeline" {
+  type        = bool
+  description = "Enable the pipeline"
+  default     = true
+}
+
+
+variable "enable_tf_next" {
+  type        = bool
+  description = "Enable the pipeline"
+  default     = false
+}

@@ -20,9 +20,11 @@ data "aws_subnets" "public_subnets" {
 }
 
 locals {
-  aliases     = var.custom_domains
-  account_id  = data.aws_caller_identity.current.account_id
-  base_domain = var.custom_domains[0]
+  aliases         = var.custom_domains
+  account_id      = data.aws_caller_identity.current.account_id
+  base_domain     = var.custom_domains[0]
+  enable_pipeline = var.enable_pipeline ? 1 : 0
+  enable_tf_next  = var.enable_pipeline ? 1 : 0
 }
 
 #######################
@@ -76,6 +78,7 @@ module "cloudfront_cert" {
 }
 
 module "tf_next" {
+  count                          = local.enable_tf_next
   source                         = "milliHQ/next-js/aws"
   cloudfront_aliases             = local.aliases
   cloudfront_acm_certificate_arn = module.cloudfront_cert.acm_certificate_arn
@@ -230,6 +233,7 @@ data "aws_subnets" "subnets" {
 }
 
 resource "aws_codebuild_project" "codebuild_project" {
+  count       = local.enable_pipeline
   name        = "${var.project_name}Build"
   description = "Codebuild project"
   cache {
@@ -286,6 +290,7 @@ data "aws_security_group" "public-default-sg" {
 }
 
 resource "aws_codepipeline" "codepipeline" {
+  count    = local.enable_pipeline
   name     = "${var.project_name}-pipeline"
   role_arn = aws_iam_role.pipeline_role.arn
 
