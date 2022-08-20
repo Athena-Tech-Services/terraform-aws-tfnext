@@ -20,11 +20,12 @@ data "aws_subnets" "public_subnets" {
 }
 
 locals {
-  aliases         = var.custom_domains
+
   account_id      = data.aws_caller_identity.current.account_id
   base_domain     = var.custom_domains[0]
   enable_pipeline = var.enable_pipeline ? 1 : 0
-  enable_tf_next  = var.enable_pipeline ? 1 : 0
+  enable_tf_next  = var.enable_tf_next ? 1 : 0
+  aliases         = var.enable_tf_next ? var.custom_domains : []
 }
 
 #######################
@@ -44,8 +45,8 @@ resource "aws_route53_record" "cloudfront_alias_domain" {
   type     = "A"
 
   alias {
-    name                   = module.tf_next.cloudfront_domain_name
-    zone_id                = module.tf_next.cloudfront_hosted_zone_id
+    name                   = local.enable_tf_next == 0 ? "" : module.tf_next.cloudfront_domain_name
+    zone_id                = data.aws_route53_zone.custom_domain_zone.zone_id
     evaluate_target_health = false
   }
 }
@@ -58,6 +59,7 @@ resource "aws_route53_record" "cloudfront_alias_domain" {
 ##########
 
 module "cloudfront_cert" {
+  count   = local.enable_tf_next
   source  = "terraform-aws-modules/acm/aws"
   version = "~> 3.0"
 
@@ -81,7 +83,7 @@ module "tf_next" {
   count                          = local.enable_tf_next
   source                         = "milliHQ/next-js/aws"
   cloudfront_aliases             = local.aliases
-  cloudfront_acm_certificate_arn = module.cloudfront_cert.acm_certificate_arn
+  cloudfront_acm_certificate_arn = local.enable_tf_next == 0 ? "" : module.cloudfront_cert.acm_certificate_arn
   cloudfront_price_class         = "PriceClass_All"
   lambda_attach_to_vpc           = true
   vpc_subnet_ids                 = toset(data.aws_subnets.public_subnets.ids)
@@ -205,7 +207,7 @@ resource "aws_s3_bucket" "codepipeline_bucket" {
 }
 
 resource "aws_s3_bucket" "codebuild_bucket" {
-  bucket = "l${var.project_name}-codebuild-bucket-${random_string.random.id}"
+  bucket = "${var.project_name}-codebuild-bucket-${random_string.random.id}"
 }
 
 resource "aws_s3_bucket_acl" "codepipeline_bucket_acl" {
@@ -290,6 +292,7 @@ data "aws_security_group" "public-default-sg" {
 }
 
 resource "aws_codepipeline" "codepipeline" {
+
   count    = local.enable_pipeline
   name     = "${var.project_name}-pipeline"
   role_arn = aws_iam_role.pipeline_role.arn
