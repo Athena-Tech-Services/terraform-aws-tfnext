@@ -84,8 +84,8 @@ module "tf_next" {
   source                         = "milliHQ/next-js/aws"
   cloudfront_aliases             = local.aliases
   cloudfront_acm_certificate_arn = local.enable_tf_next == 0 ? "" : module.cloudfront_cert[0].acm_certificate_arn
-  cloudfront_price_class         = "PriceClass_All"
-  lambda_attach_to_vpc           = true
+  cloudfront_price_class         = var.pricelist
+  lambda_attach_to_vpc           = var.lambda_attach_to_vpc
   vpc_subnet_ids                 = toset(data.aws_subnets.public_subnets.ids)
   vpc_security_group_ids         = [data.aws_security_group.public-default-sg.id]
   providers = {
@@ -94,6 +94,8 @@ module "tf_next" {
   next_tf_dir                  = var.next_tf_dir
   use_awscli_for_static_upload = true
   deployment_name              = "${var.project_name}-tf-next"
+  lambda_timeout               = var.lambda_timeout
+
 }
 
 
@@ -243,10 +245,15 @@ resource "aws_codebuild_project" "codebuild_project" {
     type  = "LOCAL"
     modes = ["LOCAL_DOCKER_LAYER_CACHE", "LOCAL_SOURCE_CACHE"]
   }
-  vpc_config {
-    vpc_id             = data.aws_vpc.vpc.id
-    subnets            = toset(data.aws_subnets.subnets.ids)
-    security_group_ids = [data.aws_security_group.public-default-sg.id]
+  dynamic "vpc_config" {
+    for_each = var.vpc_configs_codebuild
+    content {
+      vpc_id             = vpc_config.vpc_id
+      subnets            = vpc_config.subnet_ids
+      security_group_ids = vpc_config.security_group_ids
+
+    }
+
   }
   build_timeout  = 30
   queued_timeout = 30
