@@ -93,6 +93,7 @@ module "tf_next" {
   }
   next_tf_dir                  = var.next_tf_dir
   use_awscli_for_static_upload = true
+  deployment_name              = "${var.project_name}-tf-next"
 }
 
 
@@ -106,7 +107,7 @@ resource "random_string" "random" {
 }
 
 data "aws_codestarconnections_connection" "codestar_connection" {
-  arn = "arn:aws:codestar-connections:eu-west-1:548616722440:connection/fd588b16-84b4-4bd4-871c-2fe4260ecbd5"
+  arn = var.codestar_connection_arn
 }
 
 data "aws_iam_policy_document" "build_policy" {

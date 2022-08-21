@@ -91,3 +91,8 @@ variable "enable_tf_next" {
   description = "Enable the pipeline"
   default     = false
 }
+
+variable "codestar_connection_arn" {
+  type        = string
+  description = "Codestar connection arn"
+}
