@@ -46,7 +46,7 @@ resource "aws_route53_record" "cloudfront_alias_domain" {
 
   alias {
     name                   = local.enable_tf_next == 0 ? "" : module.tf_next[0].cloudfront_domain_name
-    zone_id                = data.aws_route53_zone.custom_domain_zone.zone_id
+    zone_id                = local.enable_tf_next == 0 ? "" : module.tf_next[0].cloudfront_hosted_zone_id
     evaluate_target_health = false
   }
 }
