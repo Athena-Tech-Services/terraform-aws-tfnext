@@ -45,7 +45,7 @@ resource "aws_route53_record" "cloudfront_alias_domain" {
   type     = "A"
 
   alias {
-    name                   = local.enable_tf_next == 0 ? "" : module.tf_next.cloudfront_domain_name
+    name                   = local.enable_tf_next == 0 ? "" : module.tf_next[0].cloudfront_domain_name
     zone_id                = data.aws_route53_zone.custom_domain_zone.zone_id
     evaluate_target_health = false
   }
@@ -83,7 +83,7 @@ module "tf_next" {
   count                          = local.enable_tf_next
   source                         = "milliHQ/next-js/aws"
   cloudfront_aliases             = local.aliases
-  cloudfront_acm_certificate_arn = local.enable_tf_next == 0 ? "" : module.cloudfront_cert.acm_certificate_arn
+  cloudfront_acm_certificate_arn = local.enable_tf_next == 0 ? "" : module.cloudfront_cert[0].acm_certificate_arn
   cloudfront_price_class         = "PriceClass_All"
   lambda_attach_to_vpc           = true
   vpc_subnet_ids                 = toset(data.aws_subnets.public_subnets.ids)
